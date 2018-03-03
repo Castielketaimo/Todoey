@@ -10,13 +10,14 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
 
+    let todoListArrayKey = "TodoListArray"
     var itemArray = ["Find Mike" , "Buy Eggos", " Destory Demogorgon"]
     
     let defaults = UserDefaults.standard
     override func viewDidLoad() {
         super.viewDidLoad()
         //make sure the app doesn't crash when there's no key value
-        if let items = defaults.array(forKey: "TodoListArray") as? [String]
+        if let items = defaults.array(forKey: todoListArrayKey) as? [String]
         {
             itemArray = items
         }
@@ -59,7 +60,7 @@ class TodoListViewController: UITableViewController {
             //Action when user clicks the Add Item button on UIAlert
             if(!(textField.text!.isEmpty)){
                 self.itemArray.append(textField.text!)
-                self.defaults.set(self.itemArray, forKey: "TodoListArray")
+                self.defaults.set(self.itemArray, forKey: todoListArrayKey)
                 self.tableView.reloadData()
             }
         }

@@ -7,17 +7,19 @@
 //
 
 import UIKit
-
+import CoreData
 class TodoListViewController: UITableViewController {
 
     let todoListArrayKey = "TodoListArray"
     var itemArray = [Item]()
+    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
     //userDomainMask -> App directory where all data in the app will be stored
-    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+    
     
     let defaults = UserDefaults.standard
     override func viewDidLoad() {
         super.viewDidLoad()
+        print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
         loadItems()
     }
     
@@ -44,9 +46,12 @@ class TodoListViewController: UITableViewController {
     
     //MARK - TableView Delegate Methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        //print(itemArray[indexPath.row])
-        //swap true and false
+        //swap true and false so the check mark display correctly 
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        
+        //have to be in order, othewise array out index
+//        context.delete(itemArray[indexPath.row])
+//        itemArray.remove(at: indexPath.row)
         
         saveItems()
         //so the row does not stay grey as been selected
@@ -61,8 +66,10 @@ class TodoListViewController: UITableViewController {
         let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
             //Action when user clicks the Add Item button on UIAlert
             if(!(textField.text!.isEmpty)){
+                
+                
                 //create a new item and set its title to user input
-                let newItem = Item()
+                let newItem = Item(context: self.context)
                 newItem.title = textField.text!
                 //add the new item into the array
                 self.itemArray.append(newItem)
@@ -82,27 +89,23 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
-    //MARK - Model Manupulation Methods
+    //MARK - Model Manupulation Methods CRUD
+    //Save data
     func saveItems() {
-        let encoder = PropertyListEncoder()
-        
         do{
-            let data = try encoder.encode(itemArray)
-            try data.write(to: dataFilePath!)
+           try context.save()
         } catch {
-            print("Error encoding item array, \(error)")
+            print("Error saving context \(error)")
         }
         tableView.reloadData()
     }
-    
+    //Read data
     func loadItems() {
-        if let data = try? Data(contentsOf: dataFilePath!) {
-            let decoder = PropertyListDecoder()
-            do {
-                itemArray = try decoder.decode([Item].self, from: data)
-            }catch{
-                print("Error decoding item array, \(error)")
-            }
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        do {
+            itemArray = try context.fetch(request)
+        } catch {
+            print("Error feching data from context \(error)")
         }
     }
     

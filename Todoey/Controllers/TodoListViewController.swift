@@ -20,6 +20,8 @@ class TodoListViewController: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
+        
+        
         loadItems()
     }
     
@@ -99,15 +101,35 @@ class TodoListViewController: UITableViewController {
         }
         tableView.reloadData()
     }
-    //Read data
-    func loadItems() {
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+    
+    //Read data (the with key word is exteral and request is internal) (= sign means set a default value when you call this method)
+    func loadItems(with request: NSFetchRequest<Item> = Item.fetchRequest()) {
         do {
             itemArray = try context.fetch(request)
         } catch {
             print("Error feching data from context \(error)")
         }
     }
+}
+
+//MARK: - Search bar methods
+extension TodoListViewController: UISearchBarDelegate {
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        //cd means the search is not case nor diacritic sensetive
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        
+        //using [] around the NSSortDescriptor because the request.sortDescriptor looking for an array
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        
+        loadItems(with: request)
+    }
     
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+        }
+    }
 }
 
